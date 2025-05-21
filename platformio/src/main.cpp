@@ -5,7 +5,7 @@
 
 #include "ui/widgets/widget_openweather.h"
 #include "ui/widgets/widget_jokes.h"
-#include "ui/widgets/widget_articles.h"
+#include "ui/widgets/widget_rss_feeds.h"
 #include "ui/widgets/widget_time.h"
 #include "ui/widgets/widget_mqtt_sensors.h"
 #include "ui/widgets/widget_battery.h"
@@ -60,12 +60,19 @@ ui_control_toggle toggle_audio_alarm;
 ui_control_slider slider_volume;
 // Haptics
 ui_control_toggle toggle_haptics_enable;
+
 // Open Weather
 ui_control_toggle toggle_ow_enable;
 ui_control_slider slider_ow_refresh;
 ui_control_textbox text_ow_api_key;
 ui_control_textbox text_ow_country;
 ui_control_textbox text_ow_city;
+
+// RSS Feed
+ui_control_toggle toggle_rss_enable;
+ui_control_slider slider_rss_refresh;
+ui_control_textbox text_rss_feed_url;
+
 // Screenshot stuff
 ui_control_toggle toggle_screenshot_enable;
 ui_control_slider slider_screenshot_wb_temp;
@@ -96,7 +103,7 @@ void create_ui_elements()
 	// and then pass it a list of strings for each group
 	//
 	settings_tab_group.create(0, 0, 480, 40);
-	settings_tab_group.set_tabs(std::vector<std::string>{"General", "WiFi", "Sound", "Haptics", "Weather", "Screenie"});
+	settings_tab_group.set_tabs(std::vector<std::string>{"General", "WiFi", "Sound", "Haptics", "Widgets", "Screenie"});
 	screen_settings.set_page_tabgroup(&settings_tab_group);
 
 	// grid layout is on a 6 column, 6 row array
@@ -139,15 +146,25 @@ void create_ui_elements()
 	settings_tab_group.add_child_ui(&slider_UTC, 0);
 
 	// WiFi
-	toggle_OTA_updates.create_on_grid(3, 1, "ENABLE OTA");
+	toggle_OTA_updates.create_on_grid(2, 1, "ENABLE OTA");
 	toggle_OTA_updates.set_toggle_text("NO", "YES");
 	toggle_OTA_updates.set_options_data(&settings.setting_OTA_start);
 	settings_tab_group.add_child_ui(&toggle_OTA_updates, 1);
 
-	toggle_Notify_updates.create_on_grid(3, 1, "NOTIFY UPDATES");
+	toggle_Notify_updates.create_on_grid(2, 1, "NOTIFY UPDATES");
 	toggle_Notify_updates.set_toggle_text("NO", "YES");
 	toggle_Notify_updates.set_options_data(&settings.setting_wifi_check_updates);
 	settings_tab_group.add_child_ui(&toggle_Notify_updates, 1);
+
+	// Create an Text Box the widget_ow_apikey setting
+	text_ow_city.create_on_grid(4, 1, "CITY");
+	text_ow_city.set_options_data(&settings.setting_city);
+	settings_tab_group.add_child_ui(&text_ow_city, 1);
+
+	// Create an Text Box the widget_ow_apikey setting
+	text_ow_country.create_on_grid(2, 1, "COUNTRY CODE");
+	text_ow_country.set_options_data(&settings.setting_country);
+	settings_tab_group.add_child_ui(&text_ow_country, 1);
 
 	// Sound
 	toggle_audio_ui.create_on_grid(3, 1, "UI BEEPS");
@@ -173,8 +190,8 @@ void create_ui_elements()
 	settings_tab_group.add_child_ui(&toggle_haptics_enable, 3);
 
 	// Open Weather
-	// Create a Toggle frmo the widget_ow_enabled sewtting
-	toggle_ow_enable.create_on_grid(2, 1, "ENABLE");
+	// Create a Toggle from the widget_ow_enabled sewtting
+	toggle_ow_enable.create_on_grid(2, 1, "OW ENABLE");
 	toggle_ow_enable.set_toggle_text("NO", "YES");
 	toggle_ow_enable.set_options_data(&settings.widget_ow_enabled);
 	settings_tab_group.add_child_ui(&toggle_ow_enable, 4);
@@ -190,15 +207,23 @@ void create_ui_elements()
 	text_ow_api_key.set_options_data(&settings.widget_ow_apikey);
 	settings_tab_group.add_child_ui(&text_ow_api_key, 4);
 
-	// Create an Text Box the widget_ow_apikey setting
-	text_ow_country.create_on_grid(2, 1, "COUNTRY CODE");
-	text_ow_country.set_options_data(&settings.setting_country);
-	settings_tab_group.add_child_ui(&text_ow_country, 4);
+	// RSS Feed
+	// Create a Toggle from the widget_rss_enabled setting
+	toggle_rss_enable.create_on_grid(2, 1, "RSS ENABLE");
+	toggle_rss_enable.set_toggle_text("NO", "YES");
+	toggle_rss_enable.set_options_data(&settings.widget_rss_enabled);
+	settings_tab_group.add_child_ui(&toggle_rss_enable, 4);
+
+	// Create an Int Slider from the widget_ow_poll_interval setting
+	slider_rss_refresh.create_on_grid(4, 1);
+	slider_rss_refresh.set_value_type(VALUE_TYPE::INT);
+	slider_rss_refresh.set_options_data(&settings.widget_rss_poll_interval);
+	settings_tab_group.add_child_ui(&slider_rss_refresh, 4);
 
 	// Create an Text Box the widget_ow_apikey setting
-	text_ow_city.create_on_grid(4, 1, "CITY");
-	text_ow_city.set_options_data(&settings.setting_city);
-	settings_tab_group.add_child_ui(&text_ow_city, 4);
+	text_rss_feed_url.create_on_grid(6, 1, "RSS Feed URL");
+	text_rss_feed_url.set_options_data(&settings.widget_rss_feed_url);
+	settings_tab_group.add_child_ui(&text_rss_feed_url, 4);
 
 	// Screenshot stuff
 	slider_screenshot_lvl_black.create_on_grid(3, 1);
@@ -259,9 +284,9 @@ void create_ui_elements()
 	widget_jokes.set_refresh_interval(5000);
 	screen_main.add_child_ui(&widget_jokes);
 
-	widget_articles.create(10, 260, 460, 100, TFT_BLACK, 12, 0, "Slashdot RSS");
-	widget_articles.set_refresh_interval(5000);
-	screen_main.add_child_ui(&widget_articles);
+	widget_rss_feeds.create(10, 260, 460, 100, TFT_BLACK, 12, 0, "RSS FEEDS");
+	widget_rss_feeds.set_refresh_interval(5000);
+	screen_main.add_child_ui(&widget_rss_feeds);
 
 	widget_ow.create(245, 80, 225, 72, TFT_BLACK, 16, 0, "CURRENT WEATHER");
 	widget_ow.set_title_alignment(TEXT_ALIGN::ALIGN_LEFT);
