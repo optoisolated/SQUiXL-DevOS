@@ -119,7 +119,7 @@ void WifiSetup::start()
 {
 	done = false;
 	WiFi.mode(WIFI_AP);
-	WiFi.softAP("SQUiXL");
+	WiFi.softAP("SQUiXL","",6);
 	Serial.println("AP started");
 	dnsServer.start(53, "*", WiFi.softAPIP());
 	Serial.println("DNS started");

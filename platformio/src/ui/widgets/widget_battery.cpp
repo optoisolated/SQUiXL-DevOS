@@ -79,12 +79,18 @@ bool widgetBattery::redraw(uint8_t fade_amount, int8_t tab_group)
 
 	_sprite_content.setFreeFont(UbuntuMono_R[1]);
 	_sprite_content.setTextColor(TFT_WHITE, -1);
-	_sprite_content.setCursor(40, 20);
+	_sprite_content.setCursor(40, 15);
 
 	if (wifi_controller.is_connected())
 	{
 		_sprite_content.drawSprite(0, 0, &wifi_icons[4], 1.0f, 0x0, DRAW_TO_RAM);
-		_sprite_content.print(WiFi.localIP());
+		_sprite_content.print(WiFi.localIP().toString() + " (CH " + String(WiFi.channel()) + ")");
+		if (WiFi.isConnected())
+		{
+			_sprite_content.setCursor(40, 33);
+			_sprite_content.print(WiFi.SSID());
+		}
+
 		if (squixl.update_available())
 		{
 			_sprite_content.setCursor(40, 34);
